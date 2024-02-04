@@ -13,11 +13,32 @@ contract OurTokenTest is Test{
     address bob = makeAddr("bob");
     address alice = makeAddr("alice");
 
-    // function setUp() public {
-    //     deployer = new DeployOurToken();
-    //     (ourToken) = deployer.run();
+    uint256 public constant STARTING_BALANCE = 100 ether;
 
-    //     vm.prank(address(deployer));
-    // }
+    function setUp() public {
+        deployer = new DeployOurToken();
+        (ourToken) = deployer.run();
 
+        vm.prank(msg.sender);
+        ourToken.transfer(bob, STARTING_BALANCE);
+    }
+
+    function testBobBalance() public {
+        assertEq(ourToken.balanceOf(bob), STARTING_BALANCE);
+    }   
+
+    function testAllowancesWorks() public {
+        uint256 initialAllowance = 1000;
+        uint256 transferAmount = 500;
+
+        // Bob approves Alice to spend tokens of her behalf
+        vm.prank(bob);
+        ourToken.approve(alice, initialAllowance);
+        
+        vm.prank(alice);
+        ourToken.transferFrom(bob, alice, transferAmount);
+
+        assertEq(ourToken.balanceOf(bob), STARTING_BALANCE - transferAmount);
+        assertEq(ourToken.balanceOf(alice), transferAmount);
+    }
 }
